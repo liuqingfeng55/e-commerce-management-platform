@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>电商学习平台</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark">商</span><span>电商学习平台<small>商品 · 订单 · 模拟付款与发货</small></span></div>
+    <div class="account"><span id="current-user">尚未登录</span><button id="logout-button" class="button ghost hidden" type="button">退出登录</button></div>
+  </header>
+
+  <main>
+    <section id="auth-view" class="auth-layout">
+      <div class="intro-card">
+        <span class="eyebrow">从一次下单开始</span>
+        <h1>亲手走通电商后端的核心流程</h1>
+        <p>添加商品、创建订单、模拟付款，观察后台发货和失败重试。每个账号都可以管理商品，但只能操作自己的订单与发货任务。</p>
+        <div class="flow"><span>商品上架</span><b>→</b><span>创建订单</span><b>→</b><span>模拟付款</span><b>→</b><span>后台发货</span></div>
+      </div>
+      <div class="auth-card">
+        <div class="tabs" role="tablist" aria-label="账号操作">
+          <button id="login-tab" class="tab active" type="button" role="tab" aria-selected="true">登录</button>
+          <button id="register-tab" class="tab" type="button" role="tab" aria-selected="false">注册</button>
+        </div>
+        <h2 id="auth-title">欢迎回来</h2>
+        <p id="auth-hint" class="muted">输入账号和密码，继续体验平台。</p>
+        <form id="auth-form">
+          <label for="username">用户名</label>
+          <input id="username" name="username" autocomplete="username" pattern="[A-Za-z0-9_]+" minlength="3" maxlength="50" placeholder="至少 3 位英文、数字或下划线" required>
+          <label for="password">密码</label>
+          <input id="password" name="password" type="password" minlength="8" maxlength="128" autocomplete="current-password" placeholder="至少 8 位" required>
+          <button id="auth-submit" class="button primary full" type="submit">登录</button>
+        </form>
+        <p class="auth-note">学习项目使用 HTTP Basic 认证；请勿使用常用密码。</p>
+      </div>
+    </section>
+
+    <section id="dashboard" class="hidden">
+      <div class="page-heading">
+        <div><span class="eyebrow">工作台</span><h1>商品与订单</h1><p>所有用户都可管理商品；订单只显示你自己创建的。</p></div>
+        <a class="docs-link" href="/api-docs" target="_blank" rel="noopener">查看 API 文档 ↗</a>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><span>商品总数</span><strong id="product-count">0</strong></div>
+        <div class="stat"><span>我的订单</span><strong id="order-count">0</strong></div>
+        <div class="stat"><span>待付款</span><strong id="pending-count">0</strong></div>
+        <div class="stat"><span>发货失败</span><strong id="failed-count">0</strong></div>
+      </div>
+
+      <div class="workspace">
+        <section class="panel">
+          <div class="panel-heading"><div><span class="eyebrow">01 / 商品管理</span><h2>商品列表</h2></div><button id="refresh-products" class="button subtle" type="button">刷新</button></div>
+          <form id="product-form" class="create-form">
+            <div class="field"><label for="product-name">商品名称</label><input id="product-name" maxlength="120" placeholder="例如：入门书籍" required></div>
+            <div class="field"><label for="product-price">价格（元）</label><input id="product-price" type="number" min="0" max="21474836.47" step="0.01" placeholder="19.90" required></div>
+            <div class="field"><label for="product-stock">初始库存</label><input id="product-stock" type="number" min="0" max="2147483647" step="1" placeholder="10" required></div>
+            <button class="button primary" type="submit">添加商品</button>
+          </form>
+          <div id="product-list" class="list"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-heading"><div><span class="eyebrow">02 / 订单管理</span><h2>我的订单</h2></div><button id="refresh-orders" class="button subtle" type="button">刷新</button></div>
+          <p class="panel-tip">下单后占用库存，付款后后台自动发货。付款与发货均为模拟。</p>
+          <div id="order-list" class="list"></div>
+        </section>
+      </div>
+      <section class="panel shipping-panel">
+        <div class="panel-heading"><div><span class="eyebrow">03 / 发货管理</span><h2>我的发货任务</h2></div><button id="refresh-shipping" class="button subtle" type="button">刷新</button></div>
+        <p class="panel-tip">失败后自动重试，仍未成功可点击“重新发货”。隐藏订单后，仍可在这里查看和管理发货。</p>
+        <div id="shipping-list" class="list"></div>
+      </section>
+    </section>
+  </main>
+
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+
+  <dialog id="edit-dialog">
+    <form id="edit-form" class="dialog-form">
+      <div class="dialog-heading"><span class="eyebrow">编辑商品</span><h2 id="edit-title">修改商品</h2></div>
+      <label for="edit-name">商品名称</label><input id="edit-name" maxlength="120" required>
+      <label for="edit-price">价格（元）</label><input id="edit-price" type="number" min="0" max="21474836.47" step="0.01" required>
+      <div class="dialog-actions"><button id="edit-cancel" class="button ghost" type="button">取消</button><button class="button primary" type="submit">保存修改</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="stock-dialog">
+    <form id="stock-form" class="dialog-form">
+      <div class="dialog-heading"><span class="eyebrow">库存调整</span><h2 id="stock-title">修改数量</h2></div>
+      <p class="muted">输入正数补货，输入负数减少可用库存。</p>
+      <label for="stock-delta">调整数量</label><input id="stock-delta" type="number" step="1" min="-2147483647" max="2147483647" placeholder="例如 5 或 -2" required>
+      <div class="dialog-actions"><button id="stock-cancel" class="button ghost" type="button">取消</button><button class="button primary" type="submit">确认调整</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="order-dialog">
+    <form id="order-form" class="dialog-form">
+      <div class="dialog-heading"><span class="eyebrow">创建订单</span><h2 id="order-title">购买商品</h2></div>
+      <p id="order-summary" class="muted"></p>
+      <label for="order-quantity">购买数量</label><input id="order-quantity" type="number" min="1" max="2147483647" step="1" value="1" required>
+      <div class="dialog-actions"><button id="order-cancel" class="button ghost" type="button">取消</button><button class="button primary" type="submit">确认下单</button></div>
+    </form>
+  </dialog>
+</body>
+</html>
